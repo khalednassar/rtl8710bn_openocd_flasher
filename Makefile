@@ -4,6 +4,9 @@ BUFFER_SIZE = 262144
 FLASH_SECTOR_SIZE = 4096
 CROSS_COMPILE ?= /opt/gcc-arm-none-eabi-5_4-2016q2/bin/
 
+OOCD_INTERFACE = interface/jlink.cfg
+OOCD_TRANSPORT = "transport select swd"
+
 all:
 	$(CROSS_COMPILE)arm-none-eabi-gcc -Wall -g -Os -mlittle-endian -mlong-calls -mthumb -mcpu=cortex-m3 -mfloat-abi=soft -mthumb-interwork -ffunction-sections -ffreestanding -fsingle-precision-constant -Wstrict-aliasing=0 -Wl,-T,rtl8710.ld -nostartfiles -nostdlib -u main -Wl,--section-start=.text=$(FIRMWARE_ADDRESS) -DBUFFER_ADDRESS=$(BUFFER_ADDRESS) rtl8710_flasher.c spi_flash.c -o rtl8710_flasher.elf
 	arm-none-eabi-objcopy -O binary rtl8710_flasher.elf rtl8710_flasher.bin
@@ -20,7 +23,7 @@ all:
 	echo "set rtl8710_flasher_sector_size $(FLASH_SECTOR_SIZE)" >>rtl8710.ocd
 	echo >>rtl8710.ocd
 	echo "array set rtl8710_flasher_code {" >>rtl8710.ocd
-	./make_array <rtl8710_flasher.bin >>rtl8710.ocd
+	./make_array rtl8710_flasher.bin >>rtl8710.ocd
 	echo "}" >>rtl8710.ocd
 	echo >>rtl8710.ocd
 	cat rtl8710_flasher.tcl >>rtl8710.ocd
@@ -30,20 +33,20 @@ clean:
 	rm -rf rtl8710_flasher.elf rtl8710_flasher.bin make_array rtl8710.ocd
 
 test:
-	openocd -f interface/jlink.cfg -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_read_id" -c "shutdown"
+	openocd -f $(OOCD_INTERFACE) -c $(OOCD_TRANSPORT) -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_read_id" -c "shutdown"
 
 mac:
-	openocd -f interface/jlink.cfg -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_read_mac" -c "shutdown"
+	openocd -f $(OOCD_INTERFACE) -c $(OOCD_TRANSPORT) -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_read_mac" -c "shutdown"
 
 dump:
-	openocd -f interface/jlink.cfg -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_read_id" -c "rtl8710_flash_read dump.bin 0 1048576" -c "shutdown"
+	openocd -f $(OOCD_INTERFACE) -c $(OOCD_TRANSPORT) -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_read_id" -c "rtl8710_flash_read dump.bin 0 1048576" -c "shutdown"
 
 restore:
-	openocd -f interface/jlink.cfg -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_auto_erase 1" -c "rtl8710_flash_auto_verify 1" -c "rtl8710_flash_write dump.bin 0" -c shutdown
+	openocd -f $(OOCD_INTERFACE) -c $(OOCD_TRANSPORT) -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_auto_erase 1" -c "rtl8710_flash_auto_verify 1" -c "rtl8710_flash_write dump.bin 0" -c shutdown
 
 verify:
-	openocd -f interface/jlink.cfg -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_verify dump.bin 0" -c shutdown
+	openocd -f $(OOCD_INTERFACE) -c $(OOCD_TRANSPORT) -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_flash_verify dump.bin 0" -c shutdown
 
 reset:
-	openocd -f interface/jlink.cfg -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_reboot" -c shutdown
+	openocd -f $(OOCD_INTERFACE) -c $(OOCD_TRANSPORT) -f script/rtl8710.ocd -c "init" -c "reset halt" -c "rtl8710_reboot" -c shutdown
 
