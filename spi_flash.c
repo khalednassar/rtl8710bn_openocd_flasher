@@ -115,7 +115,7 @@ void spi_flash_sector_erase(uint32_t address){
 	while(SPI_FLASH->SR & SPI_SR_SSI);
 	SPI_FLASH->SSIENR = 0;
 }
-
+/* TODO change all args to uint32_t */
 uint16_t spi_flash_write(uint32_t address, const void *buf, uint16_t count){
 	uint16_t i;
 	if(!count)return(0);

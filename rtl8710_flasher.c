@@ -86,11 +86,16 @@ int __attribute__((section(".vectors"))) main(){
 			}
 			spi_flash_wait_busy();
 		}else if(MEM_COMMAND == COMMAND_WRITE){
+			spi_flash_wait_busy();
 			for(p = 0; p < MEM_LEN; p += 256){
-				spi_flash_wait_busy();
+				/* FIXME */
+				l= MEM_LEN-p;
+				if (l > 256)
+					l=256;
+
 				spi_flash_cmd(0x06);
 				spi_flash_wait_wel();
-				spi_flash_write((MEM_OFFSET + p), (void *)&MEM_DATA[p], 256);
+				spi_flash_write((MEM_OFFSET + p), (void *)&MEM_DATA[p], l & 0xffff /*256*/);
 				spi_flash_wait_busy();
 				spi_flash_cmd(0x04);
 				spi_flash_wait_busy();
