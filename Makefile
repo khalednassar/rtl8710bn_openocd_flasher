@@ -8,8 +8,8 @@ OOCD_INTERFACE = interface/jlink.cfg
 OOCD_TRANSPORT = "transport select swd"
 
 all:
-	$(CROSS_COMPILE)arm-none-eabi-gcc -Wall -g -Os -mlittle-endian -mlong-calls -mthumb -mcpu=cortex-m3 -mfloat-abi=soft -mthumb-interwork -ffunction-sections -ffreestanding -fsingle-precision-constant -Wstrict-aliasing=0 -Wl,-T,rtl8710.ld -nostartfiles -nostdlib -u main -Wl,--section-start=.text=$(FIRMWARE_ADDRESS) -DBUFFER_ADDRESS=$(BUFFER_ADDRESS) rtl8710_flasher.c spi_flash.c -o rtl8710_flasher.elf
-	arm-none-eabi-objcopy -O binary rtl8710_flasher.elf rtl8710_flasher.bin
+	$(CROSS_COMPILE)arm-none-eabi-gcc -Wall -g -O1 -mlittle-endian -mlong-calls -mthumb -mcpu=cortex-m3 -mfloat-abi=soft -mthumb-interwork -ffunction-sections -ffreestanding -fsingle-precision-constant -Wstrict-aliasing=0 -Wl,-T,rtl8710.ld -nostartfiles -nostdlib -u main -Wl,--section-start=.text=$(FIRMWARE_ADDRESS) -DBUFFER_ADDRESS=$(BUFFER_ADDRESS) rtl8710_flasher.c spi_flash.c -o rtl8710_flasher.elf
+	$(CROSS_COMPILE)arm-none-eabi-objcopy -O binary rtl8710_flasher.elf rtl8710_flasher.bin
 	gcc make_array.c -o make_array
 	echo "#" >rtl8710.ocd
 	echo "# OpenOCD script for RTL8710" >>rtl8710.ocd

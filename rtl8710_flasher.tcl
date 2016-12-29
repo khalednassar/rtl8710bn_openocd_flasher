@@ -4,6 +4,7 @@ set rtl8710_flasher_command_sector_erase 2
 set rtl8710_flasher_command_read         3
 set rtl8710_flasher_command_write        4
 set rtl8710_flasher_command_verify       5
+set rtl8710_flasher_command_read_otp     6
 
 set rtl8710_flasher_mac_address_offset   0xA088
 
@@ -53,6 +54,25 @@ proc rtl8710_flasher_wait {} {
 proc rtl8710_flasher_load_block {local_filename offset len} {
 	global rtl8710_flasher_buffer
 	load_image $local_filename [expr {$rtl8710_flasher_buffer + 0x20 - $offset}] bin [expr {$rtl8710_flasher_buffer + 0x20}] $len
+}
+
+proc rtl8710_flasher_read_otp {} {
+	global rtl8710_flasher_buffer
+	global rtl8710_flasher_command_read_otp
+	mww [expr {$rtl8710_flasher_buffer + 0x04}] $rtl8710_flasher_command_read_otp
+	mww [expr {$rtl8710_flasher_buffer + 0x00}] 0x00000001
+	rtl8710_flasher_wait
+	mem2array otp_data 8 [expr {$rtl8710_flasher_buffer + 0x20}] 0x41
+	echo "security register: [format %02X $otp_data(0)]"
+	for {set x 1} {$x<0x41} {set x [expr {$x+8}]} {
+		set res [format %02X [expr {$x-1}]]
+		append res ": "
+			for {set y 0} {$y<8} { incr y} {
+			append res " " [format %02X $otp_data([expr {$x+$y}])]						
+		}
+		echo $res
+	}
+
 }
 
 proc rtl8710_flasher_read_block {offset len} {

@@ -34,6 +34,8 @@
 #define COMMAND_READ         3
 #define COMMAND_WRITE        4
 #define COMMAND_VERIFY       5
+#define COMMAND_READOTP      6
+
 
 int __attribute__((section(".vectors"))) main(){
 	uint32_t p, i, l;
@@ -49,8 +51,17 @@ int __attribute__((section(".vectors"))) main(){
 
 	spi_flash_init();
 
-	// read jedec info
 	spi_flash_wait_busy();
+	// exit from power-down
+	spi_flash_cmd(0xab);
+	// min 8.8us delay
+	for (i=0; i<65536; i++) __asm__ volatile ("nop" :::);
+
+	spi_flash_wait_busy();
+	// switch to main array
+	spi_flash_cmd(0xc1);
+	spi_flash_wait_busy();
+	// read jedec info
 	MEM_PARAM = spi_flash_jedec_id();
 	spi_flash_wait_busy();
 
@@ -61,6 +72,23 @@ int __attribute__((section(".vectors"))) main(){
 			MEM_PARAM = 0x00000000;
 			spi_flash_wait_busy();
 			MEM_PARAM = spi_flash_jedec_id();
+			spi_flash_wait_busy();
+		}else if (MEM_COMMAND == COMMAND_READOTP){
+			spi_flash_wait_busy();
+			// read security register
+			MEM_DATA[0] = spi_flash_rd_any(0x2b, 1);
+			//spi_flash_wait_busy();
+			// enter secured OTP
+			spi_flash_cmd(0xb1);
+			spi_flash_wait_busy();
+			// read 512 bit secured area
+			p = 0;
+			for(i = 0; i < 0x40; i += 16, p += 16){
+				spi_flash_read(p, (void *)&MEM_DATA[i+1], 16);
+			}
+			spi_flash_wait_busy();
+			//exit secured OTP
+			spi_flash_cmd(0xc1);
 			spi_flash_wait_busy();
 		}else if(MEM_COMMAND == COMMAND_MASS_ERASE){
 			spi_flash_wait_busy();

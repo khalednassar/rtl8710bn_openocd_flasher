@@ -24,6 +24,9 @@
 void spi_flash_init();
 uint16_t spi_flash_read(uint32_t address, void *buf, uint16_t count);
 uint16_t spi_flash_write(uint32_t address, const void *buf, uint16_t count);
+
+uint32_t spi_flash_rd_any(const uint8_t cmd, uint8_t rdl);
+
 uint32_t spi_flash_jedec_id();
 uint8_t spi_flash_status();
 void spi_flash_cmd(uint8_t cmd);

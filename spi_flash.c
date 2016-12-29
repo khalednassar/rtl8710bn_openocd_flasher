@@ -67,19 +67,28 @@ uint16_t spi_flash_read(uint32_t address, void *buf, uint16_t count){
 	return(count);
 }
 
-uint32_t spi_flash_jedec_id(){
-	uint32_t id;
+uint32_t spi_flash_rd_any(const uint8_t cmd, uint8_t rdl){
+	uint32_t rd_val, shift;
+	rdl = (rdl > 4)? 4 : rdl;
 	SPI_FLASH->CTRLR0 = mask32(SPI_CTRLR0_TMOD, 3) | mask32(SPI_CTRLR0_CMD_CH, 0) | mask32(SPI_CTRLR0_ADDR_CH, 0) | mask32(SPI_CTRLR0_DATA_CH, 0);
-	SPI_FLASH->CTRLR1 = 3;
+	SPI_FLASH->CTRLR1 = rdl;
 
 	SPI_FLASH->SSIENR = 1;
-	spi_flash_send(0x9F); // jedec id
-	id = spi_flash_recv();
-	id |= ((uint32_t)spi_flash_recv() << 8);
-	id |= ((uint32_t)spi_flash_recv() << 16);
+	spi_flash_send(cmd); // command
+	rd_val=0;
+	shift=0;
+	while (rdl){
+		rd_val |= ((uint32_t)spi_flash_recv() << shift);
+		shift+=8;
+		rdl--;
+	}
 	while(SPI_FLASH->SR & SPI_SR_SSI);
 	SPI_FLASH->SSIENR = 0;
-	return(id);
+	return rd_val;
+}
+
+uint32_t spi_flash_jedec_id(){
+	return spi_flash_rd_any(0x9F, 3);
 }
 
 uint8_t spi_flash_status(){
