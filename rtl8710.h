@@ -67,7 +67,7 @@ typedef struct{
 	volatile uint32_t FLUSH_FIFO;
 }__attribute__((packed)) SPI_TypeDef;
 
-#define SPI_FLASH                  ((SPI_TypeDef *)0x40006000)
+#define SPI_FLASH                  ((SPI_TypeDef *)0x40020000)
 
 // SPI_CTRLR0
 #define SPI_CTRLR0_FRF             (((uint32_t)0x03) << 4)

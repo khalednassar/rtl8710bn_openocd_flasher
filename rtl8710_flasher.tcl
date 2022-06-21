@@ -26,9 +26,9 @@ proc rtl8710_flasher_init {} {
 		halt
 		mww [expr {$rtl8710_flasher_buffer + 0x08}] 0x00000000
 		mww [expr {$rtl8710_flasher_buffer + 0x00}] 0x00000001
-		array2mem rtl8710_flasher_code 32 $rtl8710_flasher_firmware_ptr [array size rtl8710_flasher_code]
+		write_memory $rtl8710_flasher_firmware_ptr 32 $rtl8710_flasher_code
 		reg faultmask 0x01
-		reg sp 0x20000000
+		reg sp 0x10036000
 		reg pc $rtl8710_flasher_firmware_ptr
 		resume
 		rtl8710_flasher_wait
@@ -41,9 +41,7 @@ proc rtl8710_flasher_init {} {
 }
 
 proc rtl8710_flasher_mrw {reg} {
-	set value ""
-	mem2array value 32 $reg 1
-	return $value(0)
+	return [read_memory $reg 32 1]
 }
 
 proc rtl8710_flasher_wait {} {
@@ -62,13 +60,13 @@ proc rtl8710_flasher_read_otp {} {
 	mww [expr {$rtl8710_flasher_buffer + 0x04}] $rtl8710_flasher_command_read_otp
 	mww [expr {$rtl8710_flasher_buffer + 0x00}] 0x00000001
 	rtl8710_flasher_wait
-	mem2array otp_data 8 [expr {$rtl8710_flasher_buffer + 0x20}] 0x41
-	echo "security register: [format %02X $otp_data(0)]"
+	set otp_data [read_memory [expr {$rtl8710_flasher_buffer + 0x20}] 8 0x41
+	echo "security register: [format %02X [lindex $otp_data 0]]"
 	for {set x 1} {$x<0x41} {set x [expr {$x+8}]} {
 		set res [format %02X [expr {$x-1}]]
 		append res ": "
 			for {set y 0} {$y<8} { incr y} {
-			append res " " [format %02X $otp_data([expr {$x+$y}])]						
+			append res " " [format %02X [lindex [$otp_data [expr {$x+$y}]]]						
 		}
 		echo $res
 	}
@@ -235,15 +233,14 @@ proc rtl8710_flash_read_mac {} {
 	global rtl8710_flasher_buffer
 	rtl8710_flasher_init
 	rtl8710_flasher_read_block $rtl8710_flasher_mac_address_offset 6
-	set mac ""
-	mem2array mac 8 [expr {$rtl8710_flasher_buffer + 0x20}] 6
+	set mac [read_memory [expr {$rtl8710_flasher_buffer + 0x20}] 8 6]
 	set res "MAC address: "
-	append res [format %02X $mac(0)]
-	append res ":" [format %02X $mac(1)]
-	append res ":" [format %02X $mac(2)]
-	append res ":" [format %02X $mac(3)]
-	append res ":" [format %02X $mac(4)]
-	append res ":" [format %02X $mac(5)]
+	append res [format %02X [lindex $mac 0]]
+	append res ":" [format %02X [lindex $mac 1]]
+	append res ":" [format %02X [lindex $mac 2]]
+	append res ":" [format %02X [lindex $mac 3]]
+	append res ":" [format %02X [lindex $mac 4]]
+	append res ":" [format %02X [lindex $mac 5]]
 	echo $res
 }
 
